@@ -6,12 +6,12 @@
 - [x] Guardado automático con backup `.bak`
 - [x] Interfaz funcional en Tkinter
 
-## 🚀 Fase 2 – UX/UI
-- [ ] Scroll para lista de hosts
-- [ ] Orden alfabético
-- [ ] Confirmación al eliminar
-- [ ] Botón “Restaurar desde backup”
-- [ ] Indicador visual de guardado
+## ✅ Fase 2 – UX/UI
+- [x] Scroll para lista de hosts
+- [x] Orden alfabético
+- [x] Confirmación al eliminar
+- [x] Botón “Restaurar desde backup”
+- [x] Indicador visual de guardado
 
 ## 🧩 Fase 3 – Campos avanzados
 - [ ] Soporte para ProxyJump, Forwarding, ServerAlive...
