@@ -18,22 +18,29 @@
 - [x] Validación de IP/puertos
 - [x] Múltiples IdentityFile
 
-## 🔐 Fase 4 – Seguridad
-- [ ] Protección con contraseña maestra
-- [ ] Integración con `pass`
-- [ ] Ocultar campos sensibles
+## ✅ Fase 4 – Seguridad
+- [x] Protección con contraseña maestra
+- [x] Instalación automática de GPG y Pass
+- [x] Generación automática de clave GPG
+- [x] Almacenamiento de contraseña en `pass`
+- [x] Ocultar/mostrar campos sensibles (`IdentityFile`, `Password`)
 
-## 🧪 Fase 5 – Utilidades extra
+## 🔐 Fase 5 – Seguridad avanzada
+- [ ] Integración total con `pass` para campos como `Password`
+- [ ] Opcional: cifrar `IdentityFile` o rutas sensibles
+- [ ] Auto-lock por inactividad
+
+## 🧪 Fase 6 – Utilidades extra
 - [ ] Test de conexión SSH
 - [ ] Exportar/importar JSON/YAML
 - [ ] Backups con timestamp
 
-## 📦 Fase 6 – Empaquetado
+## 📦 Fase 7 – Empaquetado
 - [ ] `.deb` instalable
 - [ ] AppImage / `.exe`
 - [ ] README con screenshots
 
-## 🌐 Fase 7 – Comunidad y multiplataforma
+## 🌐 Fase 8 – Comunidad y multiplataforma
 - [ ] Soporte para Windows/macOS
 - [ ] Traducción (ES/EN)
 - [ ] Activar Issues y Discussions
