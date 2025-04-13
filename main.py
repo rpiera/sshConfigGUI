@@ -1,4 +1,5 @@
 import os
+import re
 import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
 
@@ -11,6 +12,8 @@ class SSHConfigManager:
         self.root.title("SSH Config Manager")
         self.hosts = []
         self.selected_index = None
+
+        self.extra_fields = ["ProxyJump", "LocalForward", "RemoteForward", "ServerAliveInterval"]
 
         self.build_gui()
         self.load_config()
@@ -32,12 +35,19 @@ class SSHConfigManager:
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         self.fields = {}
-        for field in ["Host", "HostName", "User", "Port", "IdentityFile"]:
+        all_fields = ["Host", "HostName", "User", "Port"] + self.extra_fields
+        for field in all_fields:
             label = tk.Label(self.right_frame, text=field)
             label.pack()
             entry = tk.Entry(self.right_frame, width=50)
             entry.pack()
             self.fields[field] = entry
+
+        # Múltiples IdentityFile
+        label = tk.Label(self.right_frame, text="IdentityFile (uno por línea)")
+        label.pack()
+        self.identityfile_text = tk.Text(self.right_frame, height=4, width=50)
+        self.identityfile_text.pack()
 
         self.button_frame = tk.Frame(self.right_frame)
         self.button_frame.pack(pady=10)
@@ -68,7 +78,11 @@ class SSHConfigManager:
             elif stripped:
                 if current:
                     key, *rest = stripped.split()
-                    current[key] = ' '.join(rest)
+                    value = ' '.join(rest)
+                    if key == "IdentityFile":
+                        current.setdefault("IdentityFile", []).append(value)
+                    else:
+                        current[key] = value
         if current:
             self.hosts.append(current)
 
@@ -90,14 +104,37 @@ class SSHConfigManager:
                 self.fields[key].delete(0, tk.END)
                 self.fields[key].insert(0, host.get(key, ""))
 
+            self.identityfile_text.delete("1.0", tk.END)
+            identity_files = host.get("IdentityFile", [])
+            if isinstance(identity_files, str):
+                identity_files = [identity_files]
+            self.identityfile_text.insert(tk.END, "\n".join(identity_files))
+
     def new_host(self):
         for entry in self.fields.values():
             entry.delete(0, tk.END)
+        self.identityfile_text.delete("1.0", tk.END)
         self.selected_index = None
         self.status_label.config(text="")
 
     def save_host(self):
+        host_name = self.fields["HostName"].get().strip()
+        port = self.fields["Port"].get().strip()
+
+        if host_name and not self.is_valid_hostname_or_ip(host_name):
+            messagebox.showerror("Error", f"HostName no válido: {host_name}")
+            return
+
+        if port and not port.isdigit():
+            messagebox.showerror("Error", f"El puerto debe ser un número entero: {port}")
+            return
+
         data = {key: entry.get().strip() for key, entry in self.fields.items() if entry.get().strip()}
+
+        identity_files = self.identityfile_text.get("1.0", tk.END).strip().splitlines()
+        if identity_files:
+            data["IdentityFile"] = identity_files
+
         if not data.get("Host"):
             messagebox.showerror("Error", "El campo 'Host' es obligatorio.")
             return
@@ -110,6 +147,11 @@ class SSHConfigManager:
         self.refresh_listbox()
         self.status_label.config(text="✅ Cambios guardados")
 
+    def is_valid_hostname_or_ip(self, value):
+        hostname_regex = re.compile(r'^[a-zA-Z0-9.-]+$')
+        ip_regex = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
+        return hostname_regex.match(value) or ip_regex.match(value)
+
     def delete_host(self):
         if self.selected_index is not None:
             confirm = messagebox.askyesno("Confirmar eliminación", "¿Estás seguro de que quieres eliminar este host?")
@@ -120,6 +162,7 @@ class SSHConfigManager:
                 self.refresh_listbox()
                 for entry in self.fields.values():
                     entry.delete(0, tk.END)
+                self.identityfile_text.delete("1.0", tk.END)
                 self.status_label.config(text="✅ Host eliminado")
 
     def write_config(self):
@@ -128,9 +171,12 @@ class SSHConfigManager:
         with open(CONFIG_PATH, 'w') as f:
             for host in self.hosts:
                 f.write(f"Host {host.get('Host')}\n")
-                for key in ["HostName", "User", "Port", "IdentityFile"]:
+                for key in ["HostName", "User", "Port"] + self.extra_fields:
                     if key in host:
                         f.write(f"    {key} {host[key]}\n")
+                if "IdentityFile" in host:
+                    for identity in host["IdentityFile"]:
+                        f.write(f"    IdentityFile {identity}\n")
                 f.write("\n")
 
     def restore_backup(self):

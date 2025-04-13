@@ -13,10 +13,10 @@
 - [x] Botón “Restaurar desde backup”
 - [x] Indicador visual de guardado
 
-## 🧩 Fase 3 – Campos avanzados
-- [ ] Soporte para ProxyJump, Forwarding, ServerAlive...
-- [ ] Validación de IP/puertos
-- [ ] Múltiples IdentityFile
+## ✅ Fase 3 – Campos avanzados
+- [x] Soporte para ProxyJump, Forwarding, ServerAlive...
+- [x] Validación de IP/puertos
+- [x] Múltiples IdentityFile
 
 ## 🔐 Fase 4 – Seguridad
 - [ ] Protección con contraseña maestra
