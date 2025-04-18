@@ -90,13 +90,22 @@ class SSHConfigManager:
         if self.readonly:
             messagebox.showinfo("Solo lectura", "La edición está deshabilitada en este modo.")
             return
+
         data = validar_host_campos(self.fields, self.identityfile_text)
         if not data:
             return
 
         if self.selected_index is not None:
+            existing_hosts = [h.get("Host", "") for i, h in enumerate(self.hosts) if i != self.selected_index]
+            if data["Host"] in existing_hosts:
+                messagebox.showwarning("Duplicado", f"Ya existe un host con el nombre '{data['Host']}'.")
+                return
             self.hosts[self.selected_index] = data
         else:
+            existing_hosts = [h.get("Host", "") for h in self.hosts]
+            if data["Host"] in existing_hosts:
+                messagebox.showwarning("Duplicado", f"Ya existe un host con el nombre '{data['Host']}'.")
+                return
             self.hosts.append(data)
 
         pwd_value = self.password_entry.get().strip()
