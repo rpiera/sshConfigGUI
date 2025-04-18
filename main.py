@@ -30,12 +30,18 @@ CONFIG_PATH = os.path.expanduser("~/.ssh/config")
 PASS_ENTRY = "sshConfigGUI/master-password"
 
 
+import json
+
+APP_CONFIG_PATH = os.path.expanduser("~/.config/sshConfigGUI/settings.json")
+
 class SSHConfigManager:
     def __init__(self, root):
+        self._load_app_settings()
         self.search_var = tk.StringVar()
         self.search_var.trace("w", lambda *args: self.refresh_list_with_search())
         self.root = root
         self.root.title("SSH Config Manager")
+        self.root.geometry(self.app_settings.get("window_size", "900x500"))
         self.hosts = []
         self.selected_index = None
 
@@ -115,6 +121,22 @@ class SSHConfigManager:
         self.selected_index = None
         self.status_label.config(text="")
 
+    def _load_app_settings(self):
+        try:
+            with open(APP_CONFIG_PATH, "r", encoding="utf-8") as f:
+                self.app_settings = json.load(f)
+        except Exception:
+            self.app_settings = {}
+
+    def _save_app_settings(self):
+        self.app_settings["window_size"] = self.root.winfo_geometry()
+        if self.selected_index is not None and 0 <= self.selected_index < len(self.filtered_hosts):
+            self.app_settings["last_host"] = self.filtered_hosts[self.selected_index].get("Host")
+        self.app_settings["password_shown"] = self.password_shown
+        os.makedirs(os.path.dirname(APP_CONFIG_PATH), exist_ok=True)
+        with open(APP_CONFIG_PATH, "w", encoding="utf-8") as f:
+            json.dump(self.app_settings, f, indent=2)
+
     def load_config(self):
         self.hosts = load_config()
         self.refresh_list_with_search()
@@ -123,13 +145,18 @@ class SSHConfigManager:
         return is_valid_hostname_or_ip(value)
 
     def refresh_list_with_search(self):
+        last_host = self.app_settings.get("last_host")
+        select_index = None
         query = self.search_var.get().strip().lower()
         filtered = [h for h in self.hosts if query in h.get("Host", "").lower()]
         self.filtered_hosts = filtered
         self.selected_index = None
         self.host_listbox.delete(0, tk.END)
-        for host in filtered:
-            self.host_listbox.insert(tk.END, host.get("Host", ""))
+        for i, host in enumerate(filtered):
+            name = host.get("Host", "")
+            self.host_listbox.insert(tk.END, name)
+            if name == last_host:
+                select_index = i
 
     def copy_ssh_command(self):
         if self.selected_index is not None and self.selected_index < len(self.filtered_hosts):
@@ -173,6 +200,10 @@ class SSHConfigManager:
             self.identityfile_text.delete("1.0", tk.END)
             self.identityfile_text.insert(tk.END, "".join(lines))
 
+            if select_index is not None:
+                self.host_listbox.select_set(select_index)
+                self.host_listbox.event_generate("<<ListboxSelect>>")
+
     def write_config(self):
         write_config(self.hosts)
 
@@ -180,5 +211,6 @@ class SSHConfigManager:
 if __name__ == "__main__":
     root = tk.Tk()
     app = SSHConfigManager(root)
+    root.protocol("WM_DELETE_WINDOW", lambda: (app._save_app_settings(), root.destroy()))
     root.mainloop()
 
