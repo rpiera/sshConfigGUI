@@ -157,6 +157,22 @@ class SSHConfigManager:
         else:
             messagebox.showwarning("Sin selección", "Selecciona un host para copiar su comando SSH.")
 
+    def select_identity_file(self):
+        path = filedialog.askopenfilename(
+            title="Seleccionar archivo de clave SSH",
+            filetypes=[
+                ("Archivos de clave", "*.pem *.key *.pub *.id_rsa *"),
+                ("Todos los archivos", "*.*")
+            ]
+        )
+        if path:
+            current = self.identityfile_text.get("1.0", tk.END).strip()
+            lines = current.splitlines() if current else []
+            if path not in lines:
+                lines.append(path)
+            self.identityfile_text.delete("1.0", tk.END)
+            self.identityfile_text.insert(tk.END, "".join(lines))
+
     def write_config(self):
         write_config(self.hosts)
 
@@ -165,3 +181,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SSHConfigManager(root)
     root.mainloop()
+

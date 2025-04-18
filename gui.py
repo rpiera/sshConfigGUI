@@ -52,6 +52,9 @@ def build_gui(self, extra_fields):
     self.identityfile_text = tk.Text(self.right_frame, height=4, width=50)
     self.identityfile_text.pack()
 
+    # Botón para seleccionar archivo
+    tk.Button(self.right_frame, text="Añadir clave SSH…", command=self.select_identity_file).pack(pady=(2, 5))
+
     self.button_frame = tk.Frame(self.right_frame)
     self.button_frame.pack(pady=10)
     tk.Button(self.button_frame, text="Nuevo", command=self.new_host).grid(row=0, column=0, padx=5)
