@@ -1,0 +1,40 @@
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+env/
+
+# Archivos temporales de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de logs y debugging
+*.log
+
+# Archivos de configuración de entorno
+.env
+.env.*
+
+# Archivos creados por editores/IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Backups y binarios
+*.bak
+*.zip
+*.tar.gz
+*.exe
+*.AppImage
+dist/
+build/
+*.egg-info/
+
+# SSH key files (si se usan en tests)
+*.pem
+*.key
+
+# Base de datos temporal
+*.sqlite3

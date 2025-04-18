@@ -24,23 +24,26 @@
 - [x] Generación automática de clave GPG
 - [x] Almacenamiento de contraseña en `pass`
 - [x] Ocultar/mostrar campos sensibles (`IdentityFile`, `Password`)
+- [x] Integración total con `pass` para campos como `Password`
 
-## 🔐 Fase 5 – Seguridad avanzada
-- [ ] Integración total con `pass` para campos como `Password`
-- [ ] Opcional: cifrar `IdentityFile` o rutas sensibles
-- [ ] Auto-lock por inactividad
-
-## 🧪 Fase 6 – Utilidades extra
+## 🧪 Fase 5 – Utilidades extra
+- [ ] Búsqueda de hosts por nombre
+- [ ] Copiar entrada SSH al portapapeles
+- [ ] Selector de archivo para IdentityFile
+- [ ] Recordar tamaño de ventana, último host seleccionado, visibilidad de contraseña
+- [ ] Modo solo lectura para evitar ediciones accidentales
+- [ ] Detección de duplicados al guardar
+- [ ] Recarga automática si se modifica ~/.ssh/config externamente
 - [ ] Test de conexión SSH
 - [ ] Exportar/importar JSON/YAML
 - [ ] Backups con timestamp
 
-## 📦 Fase 7 – Empaquetado
+## 📦 Fase 6 – Empaquetado
 - [ ] `.deb` instalable
 - [ ] AppImage / `.exe`
 - [ ] README con screenshots
 
-## 🌐 Fase 8 – Comunidad y multiplataforma
+## 🌐 Fase 7 – Comunidad y multiplataforma
 - [ ] Soporte para Windows/macOS
 - [ ] Traducción (ES/EN)
 - [ ] Activar Issues y Discussions

@@ -29,6 +29,7 @@ from host_manager import (
 CONFIG_PATH = os.path.expanduser("~/.ssh/config")
 PASS_ENTRY = "sshConfigGUI/master-password"
 
+
 class SSHConfigManager:
     def __init__(self, root):
         self.root = root
@@ -122,7 +123,9 @@ class SSHConfigManager:
     def write_config(self):
         write_config(self.hosts)
 
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = SSHConfigManager(root)
     root.mainloop()
+
