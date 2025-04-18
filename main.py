@@ -4,6 +4,7 @@ import subprocess
 import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
 import shutil
+import json
 
 from config_manager import (
     load_config,
@@ -28,13 +29,12 @@ from host_manager import (
 
 CONFIG_PATH = os.path.expanduser("~/.ssh/config")
 PASS_ENTRY = "sshConfigGUI/master-password"
-
-
-import json
-
 APP_CONFIG_PATH = os.path.expanduser("~/.config/sshConfigGUI/settings.json")
 
+
 class SSHConfigManager:
+    readonly = False
+
     def __init__(self, root):
         self._load_app_settings()
         self.search_var = tk.StringVar()
@@ -72,6 +72,7 @@ class SSHConfigManager:
                 return
 
         build_gui(self, self.extra_fields)
+        self._add_readonly_toggle()
         self.load_config()
 
     def restore_backup(self):
@@ -86,6 +87,9 @@ class SSHConfigManager:
             self.status_label.config(text="")
 
     def save_host(self):
+        if self.readonly:
+            messagebox.showinfo("Solo lectura", "La edición está deshabilitada en este modo.")
+            return
         data = validar_host_campos(self.fields, self.identityfile_text)
         if not data:
             return
@@ -103,6 +107,9 @@ class SSHConfigManager:
         self.status_label.config(text="✅ Cambios guardados")
 
     def delete_host(self):
+        if self.readonly:
+            messagebox.showinfo("Solo lectura", "No puedes eliminar en modo de solo lectura.")
+            return
         if self.selected_index is not None:
             confirm = messagebox.askyesno("Confirmar eliminación", "¿Estás seguro de que quieres eliminar este host?")
             if confirm:
@@ -117,14 +124,39 @@ class SSHConfigManager:
                 self.status_label.config(text="✅ Host eliminado")
 
     def new_host(self):
+        if self.readonly:
+            messagebox.showinfo("Solo lectura", "No puedes crear un host nuevo en modo de solo lectura.")
+            return
         limpiar_campos_host(self)
         self.selected_index = None
         self.status_label.config(text="")
 
+    def _add_readonly_toggle(self):
+        toggle_frame = tk.Frame(self.root)
+        toggle_frame.pack(fill=tk.X, pady=(2, 0))
+        self.readonly_var = tk.BooleanVar(value=self.readonly)
+        readonly_btn = tk.Checkbutton(toggle_frame, text="Modo solo lectura", variable=self.readonly_var, command=self._toggle_readonly)
+        readonly_btn.pack(anchor="w", padx=10)
+
+    def _toggle_readonly(self):
+        self.readonly = self.readonly_var.get()
+        estado = "activado" if self.readonly else "desactivado"
+        self.status_label.config(text=f"🔒 Modo solo lectura {estado}")
+
+        state = tk.DISABLED if self.readonly else tk.NORMAL
+        for entry in self.fields.values():
+            entry.config(state=state)
+        self.identityfile_text.config(state=state)
+        self.password_entry.config(state=state)
+        if hasattr(self, 'add_identity_button'):
+            self.add_identity_button.config(state=state)
+
     def _load_app_settings(self):
+        self.readonly = False
         try:
             with open(APP_CONFIG_PATH, "r", encoding="utf-8") as f:
                 self.app_settings = json.load(f)
+                self.readonly = self.app_settings.get("readonly", False)
         except Exception:
             self.app_settings = {}
 
@@ -133,6 +165,7 @@ class SSHConfigManager:
         if self.selected_index is not None and 0 <= self.selected_index < len(self.filtered_hosts):
             self.app_settings["last_host"] = self.filtered_hosts[self.selected_index].get("Host")
         self.app_settings["password_shown"] = self.password_shown
+        self.app_settings["readonly"] = self.readonly
         os.makedirs(os.path.dirname(APP_CONFIG_PATH), exist_ok=True)
         with open(APP_CONFIG_PATH, "w", encoding="utf-8") as f:
             json.dump(self.app_settings, f, indent=2)
@@ -157,6 +190,10 @@ class SSHConfigManager:
             self.host_listbox.insert(tk.END, name)
             if name == last_host:
                 select_index = i
+
+        if select_index is not None:
+            self.host_listbox.select_set(select_index)
+            self.host_listbox.event_generate("<<ListboxSelect>>")
 
     def copy_ssh_command(self):
         if self.selected_index is not None and self.selected_index < len(self.filtered_hosts):
@@ -198,11 +235,7 @@ class SSHConfigManager:
             if path not in lines:
                 lines.append(path)
             self.identityfile_text.delete("1.0", tk.END)
-            self.identityfile_text.insert(tk.END, "".join(lines))
-
-            if select_index is not None:
-                self.host_listbox.select_set(select_index)
-                self.host_listbox.event_generate("<<ListboxSelect>>")
+            self.identityfile_text.insert(tk.END, "\n".join(lines))
 
     def write_config(self):
         write_config(self.hosts)
@@ -213,4 +246,3 @@ if __name__ == "__main__":
     app = SSHConfigManager(root)
     root.protocol("WM_DELETE_WINDOW", lambda: (app._save_app_settings(), root.destroy()))
     root.mainloop()
-
