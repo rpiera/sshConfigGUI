@@ -4,15 +4,26 @@ import subprocess
 from auth import get_password_from_pass
 
 def build_gui(self, extra_fields):
-    self.left_frame = tk.Frame(self.root)
-    self.left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+    left_frame = tk.Frame(self.root)
+    left_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
 
-    self.scrollbar = tk.Scrollbar(self.left_frame, orient=tk.VERTICAL)
-    self.host_listbox = tk.Listbox(self.left_frame, width=30, yscrollcommand=self.scrollbar.set)
+    # Buscador
+    self.search_var = getattr(self, "search_var", tk.StringVar())
+    self.search_var.trace("w", lambda *args: self.refresh_list_with_search())
+    search_container = tk.Frame(left_frame)
+    search_container.pack(fill=tk.X, pady=(0, 4))
+    search_label = tk.Label(search_container, text="🔍 Buscar host:")
+    search_label.pack(side=tk.LEFT, padx=(4, 4))
+    search_entry = tk.Entry(search_container, textvariable=self.search_var, width=30)
+    search_entry.pack(side=tk.LEFT)
+    search_entry.focus_set()
+
+    # Lista de hosts
+    self.scrollbar = tk.Scrollbar(left_frame, orient=tk.VERTICAL)
+    self.host_listbox = tk.Listbox(left_frame, width=30, yscrollcommand=self.scrollbar.set)
     self.scrollbar.config(command=self.host_listbox.yview)
     self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
     self.host_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
     self.host_listbox.bind("<<ListboxSelect>>", lambda e: on_select(self))
 
     self.right_frame = tk.Frame(self.root)
@@ -47,6 +58,7 @@ def build_gui(self, extra_fields):
     tk.Button(self.button_frame, text="Guardar", command=self.save_host).grid(row=0, column=1, padx=5)
     tk.Button(self.button_frame, text="Eliminar", command=self.delete_host).grid(row=0, column=2, padx=5)
     tk.Button(self.button_frame, text="Restaurar backup", command=self.restore_backup).grid(row=0, column=3, padx=5)
+    tk.Button(self.button_frame, text="Copiar SSH", command=self.copy_ssh_command).grid(row=0, column=4, padx=5)
 
     self.status_label = tk.Label(self.right_frame, text="", fg="green")
     self.status_label.pack(pady=(5, 0))
@@ -75,12 +87,6 @@ def on_select(self):
             self.password_entry.insert(0, password or "")
         if self.password_shown:
             toggle_password(self)
-
-def refresh_listbox(self):
-    self.hosts.sort(key=lambda h: h.get("Host", "").lower())
-    self.host_listbox.delete(0, tk.END)
-    for host in self.hosts:
-        self.host_listbox.insert(tk.END, host.get("Host", ""))
 
 def toggle_password(self):
     if self.password_shown:

@@ -17,7 +17,7 @@ from auth import (
     store_password_in_pass,
     delete_password_from_pass
 )
-from gui import build_gui, refresh_listbox, toggle_password
+from gui import build_gui, toggle_password
 from host_manager import (
     validar_host_campos,
     manejar_password,
@@ -32,6 +32,8 @@ PASS_ENTRY = "sshConfigGUI/master-password"
 
 class SSHConfigManager:
     def __init__(self, root):
+        self.search_var = tk.StringVar()
+        self.search_var.trace("w", lambda *args: self.refresh_list_with_search())
         self.root = root
         self.root.title("SSH Config Manager")
         self.hosts = []
@@ -91,7 +93,7 @@ class SSHConfigManager:
         manejar_password(data['Host'], pwd_value)
 
         write_config(self.hosts)
-        refresh_listbox(self)
+        self.refresh_list_with_search()
         self.status_label.config(text="✅ Cambios guardados")
 
     def delete_host(self):
@@ -102,7 +104,7 @@ class SSHConfigManager:
                 del self.hosts[self.selected_index]
                 self.selected_index = None
                 write_config(self.hosts)
-                refresh_listbox(self)
+                self.refresh_list_with_search()
                 limpiar_campos_host(self)
                 if host_alias:
                     eliminar_password_por_host(host_alias)
@@ -115,10 +117,45 @@ class SSHConfigManager:
 
     def load_config(self):
         self.hosts = load_config()
-        refresh_listbox(self)
+        self.refresh_list_with_search()
 
     def is_valid_hostname_or_ip(self, value):
         return is_valid_hostname_or_ip(value)
+
+    def refresh_list_with_search(self):
+        query = self.search_var.get().strip().lower()
+        filtered = [h for h in self.hosts if query in h.get("Host", "").lower()]
+        self.filtered_hosts = filtered
+        self.selected_index = None
+        self.host_listbox.delete(0, tk.END)
+        for host in filtered:
+            self.host_listbox.insert(tk.END, host.get("Host", ""))
+
+    def copy_ssh_command(self):
+        if self.selected_index is not None and self.selected_index < len(self.filtered_hosts):
+            host = self.filtered_hosts[self.selected_index]
+            user = host.get("User", "")
+            hostname = host.get("HostName", "")
+            port = host.get("Port", "")
+            if hostname:
+                cmd = "ssh"
+                if user:
+                    cmd += f" {user}@{hostname}"
+                else:
+                    cmd += f" {hostname}"
+                if port:
+                    cmd += f" -p {port}"
+                try:
+                    self.root.clipboard_clear()
+                    self.root.clipboard_append(cmd)
+                    self.root.update()
+                    self.status_label.config(text="✅ Copiado al portapapeles")
+                except Exception as e:
+                    messagebox.showerror("Error", f"No se pudo copiar al portapapeles: {e}")
+            else:
+                messagebox.showwarning("Campo incompleto", "Este host no tiene 'HostName'.")
+        else:
+            messagebox.showwarning("Sin selección", "Selecciona un host para copiar su comando SSH.")
 
     def write_config(self):
         write_config(self.hosts)
@@ -128,4 +165,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SSHConfigManager(root)
     root.mainloop()
-
