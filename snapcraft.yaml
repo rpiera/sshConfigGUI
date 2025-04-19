@@ -6,7 +6,7 @@ description: |
   gestionar claves SSH y almacenar contraseñas cifradas con pass + GPG.
 
 confinement: strict
-base: core22
+base: core20
 grade: stable
 
 apps:
