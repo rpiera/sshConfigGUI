@@ -1,0 +1,31 @@
+name: sshconfiggui
+version: '1.0.0'
+summary: Gestor de ~/.ssh/config con GUI y pass
+description: |
+  sshConfigGUI es una interfaz gráfica para editar el archivo ~/.ssh/config,
+  gestionar claves SSH y almacenar contraseñas cifradas con pass + GPG.
+
+confinement: strict
+base: core22
+grade: stable
+
+apps:
+  sshconfiggui:
+    command: bin/sshconfiggui
+    plugs:
+      - network
+      - home
+      - desktop
+
+parts:
+  sshconfiggui:
+    plugin: dump
+    source: dist/
+    organize:
+      sshconfiggui: bin/sshconfiggui
+    stage-packages:
+      - libtk8.6
+      - libx11-6
+      - libxext6
+      - libxrender1
+      - libxft2
