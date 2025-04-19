@@ -33,7 +33,6 @@
 - [x] Recordar tamaño de ventana, último host seleccionado, visibilidad de contraseña
 - [x] Modo solo lectura para evitar ediciones accidentales
 - [x] Detección de duplicados al guardar
-- [ ] Recarga automática si se modifica ~/.ssh/config externamente
 - [x] Test de conexión SSH
 - [x] Exportar/importar JSON (descartado YAML)
 - [x] Backups con timestamp en carpeta separada
