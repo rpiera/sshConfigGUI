@@ -60,7 +60,8 @@ build-deb: build-bin
 # 4. Crear Snap
 build-snap:
 	@echo "[4/4] Construyendo Snap..."
-	snapcraft --destructive-mode --output=$(SNAP_NAME).snap
+	snapcraft --destructive-mode
+	mv *.snap $(SNAP_NAME).snap
 	@echo "Snap generado: $(SNAP_NAME).snap"
 
 # Limpiar artefactos
