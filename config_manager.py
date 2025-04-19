@@ -1,21 +1,28 @@
-import os
+from pathlib import Path
 import shutil
-import json
-from i18n import t
-from datetime import datetime
-
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from datetime import datetime
 
-CONFIG_PATH = os.path.expanduser("~/.ssh/config")
+from i18n import t
+import settings
+from validators import is_valid_hostname_or_ip
+
+# Paths de configuración
+CONFIG_PATH = settings.SSH_CONFIG_PATH
+BACKUP_DIR = settings.BACKUP_DIR
 
 
 def load_config():
+    """
+    Parsea el archivo SSH config y devuelve una lista de hosts.
+    """
     hosts = []
     current = {}
-    if not os.path.exists(CONFIG_PATH):
+    if not CONFIG_PATH.exists():
         return []
-    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+
+    with CONFIG_PATH.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -33,27 +40,32 @@ def load_config():
                         current.setdefault("IdentityFile", []).append(value)
                     else:
                         current[key] = value
+                else:
+                    # Línea malformada en ~/.ssh/config: advertencia al usuario
+                    messagebox.showwarning(
+                        t("error"),
+                        f"Línea ignorada en ~/.ssh/config: '{line}'"
+                    )
         if current:
             hosts.append(current)
     return hosts
 
 
 def write_config(hosts):
-    # Crear carpeta de backups
-    backup_dir = os.path.expanduser("~/.config/sshConfigGUI/backups")
-    os.makedirs(backup_dir, exist_ok=True)
+    """
+    Guarda la lista de hosts, haciendo backup previo del archivo original.
+    """
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Si existe el archivo actual, crear copia con timestamp
-    if os.path.exists(CONFIG_PATH) and os.path.getsize(CONFIG_PATH) > 0:
+    if CONFIG_PATH.exists() and CONFIG_PATH.stat().st_size > 0:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        backup_path = os.path.join(backup_dir, f"config.backup-{timestamp}")
+        backup_path = BACKUP_DIR / f"config.backup-{timestamp}"
         try:
-            shutil.copy(CONFIG_PATH, backup_path)
+            shutil.copy(str(CONFIG_PATH), str(backup_path))
         except Exception as e:
             print(t("error_backup").format(e=e))
 
-    # Escribir nueva configuración
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+    with CONFIG_PATH.open("w", encoding="utf-8") as f:
         for host in hosts:
             f.write(f"Host {host.get('Host')}\n")
             for key, value in host.items():
@@ -68,35 +80,28 @@ def write_config(hosts):
 
 
 def restore_backup():
-    backup_dir = os.path.expanduser("~/.config/sshConfigGUI/backups")
-    if not os.path.isdir(backup_dir):
+    """
+    Permite al usuario seleccionar y restaurar una copia de seguridad.
+    """
+    if not BACKUP_DIR.is_dir():
         return False
 
-    root = tk.Tk()
-    root.withdraw()
-
-    path = filedialog.askopenfilename(
-        initialdir=backup_dir,
+    path_str = filedialog.askopenfilename(
+        initialdir=str(BACKUP_DIR),
         title=t("selecciona_backup"),
         filetypes=[(t("backups_ssh"), "config.backup-*"), (t("todos_los_archivos"), "*.*")]
     )
-
-    if path:
-        confirm = messagebox.askyesno(t("restaurar_backup"), t("confirmar_restauracion").format(path=path))
-        if confirm:
-            try:
-                shutil.copy(path, CONFIG_PATH)
-                return True
-            except Exception as e:
-                messagebox.showerror(t("error"), t("no_backup_restaurado").format(e=e))
-                return False
-    return False
-
-
-def is_valid_hostname_or_ip(value):
-    import re
-    if not value:
+    if not path_str:
         return False
-    ip_pattern = r"^\d{1,3}(\.\d{1,3}){3}$"
-    hostname_pattern = r"^[a-zA-Z0-9.-]+$"
-    return re.match(ip_pattern, value) or re.match(hostname_pattern, value)
+    path = Path(path_str)
+
+    confirm = messagebox.askyesno(t("restaurar_backup"), t("confirmar_restauracion").format(path=path))
+    if not confirm:
+        return False
+
+    try:
+        shutil.copy(str(path), str(CONFIG_PATH))
+        return True
+    except Exception as e:
+        messagebox.showerror(t("error"), t("no_backup_restaurado").format(e=e))
+        return False
