@@ -45,6 +45,6 @@
 
 ## 🌐 Fase 7 – Comunidad y multiplataforma
 - [ ] Soporte para Windows/macOS
-- [ ] Traducción (ES/EN)
+- [x] Traducción (ES/EN)
 - [ ] Activar Issues y Discussions
 - [ ] Sitio web del proyecto
