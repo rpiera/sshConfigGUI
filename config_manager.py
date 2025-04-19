@@ -1,6 +1,7 @@
 import os
 import shutil
 import json
+from i18n import t
 from datetime import datetime
 
 import tkinter as tk
@@ -49,7 +50,7 @@ def write_config(hosts):
         try:
             shutil.copy(CONFIG_PATH, backup_path)
         except Exception as e:
-            print(f"⚠️ No se pudo crear backup con timestamp: {e}")
+            print(t("error_backup").format(e=e))
 
     # Escribir nueva configuración
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
@@ -76,18 +77,18 @@ def restore_backup():
 
     path = filedialog.askopenfilename(
         initialdir=backup_dir,
-        title="Selecciona un backup para restaurar",
-        filetypes=[("Backups de SSH", "config.backup-*"), ("Todos los archivos", "*.*")]
+        title=t("selecciona_backup"),
+        filetypes=[(t("backups_ssh"), "config.backup-*"), (t("todos_los_archivos"), "*.*")]
     )
 
     if path:
-        confirm = messagebox.askyesno("Restaurar backup", f"¿Deseas restaurar este archivo?\n\n{path}")
+        confirm = messagebox.askyesno(t("restaurar_backup"), t("confirmar_restauracion").format(path=path))
         if confirm:
             try:
                 shutil.copy(path, CONFIG_PATH)
                 return True
             except Exception as e:
-                messagebox.showerror("Error", f"No se pudo restaurar el backup:\n{e}")
+                messagebox.showerror(t("error"), t("no_backup_restaurado").format(e=e))
                 return False
     return False
 

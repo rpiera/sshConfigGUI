@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import subprocess
 from auth import get_password_from_pass
+from i18n import t
 
 def build_gui(self, extra_fields):
     left_frame = tk.Frame(self.root)
@@ -12,7 +13,7 @@ def build_gui(self, extra_fields):
     self.search_var.trace("w", lambda *args: self.refresh_list_with_search())
     search_container = tk.Frame(left_frame)
     search_container.pack(fill=tk.X, pady=(0, 4))
-    search_label = tk.Label(search_container, text="🔍 Buscar host:")
+    search_label = tk.Label(search_container, text=t("buscar_host"))
     search_label.pack(side=tk.LEFT, padx=(4, 4))
     search_entry = tk.Entry(search_container, textvariable=self.search_var, width=30)
     search_entry.pack(side=tk.LEFT)
@@ -44,7 +45,7 @@ def build_gui(self, extra_fields):
     pwd_frame.pack(pady=(0, 5))
     self.password_entry = tk.Entry(pwd_frame, width=45, show='*')
     self.password_entry.pack(side=tk.LEFT)
-    self.show_password_button = tk.Button(pwd_frame, text="Mostrar", command=lambda: toggle_password(self))
+    self.show_password_button = tk.Button(pwd_frame, text=t("mostrar_contrasena"), command=lambda: toggle_password(self))
     self.show_password_button.pack(side=tk.LEFT, padx=5)
 
     identity_label = tk.Label(self.right_frame, text="IdentityFile (uno por línea)")
@@ -53,18 +54,18 @@ def build_gui(self, extra_fields):
     self.identityfile_text.pack()
 
     # Botón para seleccionar archivo
-    tk.Button(self.right_frame, text="Añadir clave SSH…", command=self.select_identity_file).pack(pady=(2, 5))
+    tk.Button(self.right_frame, text=t("clave_ssh"), command=self.select_identity_file).pack(pady=(2, 5))
 
     self.button_frame = tk.Frame(self.right_frame)
     self.button_frame.pack(pady=10)
-    tk.Button(self.button_frame, text="Nuevo", command=self.new_host).grid(row=0, column=0, padx=5)
-    tk.Button(self.button_frame, text="Guardar", command=self.save_host).grid(row=0, column=1, padx=5)
-    tk.Button(self.button_frame, text="Eliminar", command=self.delete_host).grid(row=0, column=2, padx=5)
-    tk.Button(self.button_frame, text="Restaurar backup", command=self.restore_backup).grid(row=0, column=3, padx=5)
-    tk.Button(self.button_frame, text="Copiar SSH", command=self.copy_ssh_command).grid(row=0, column=4, padx=5)
-    tk.Button(self.button_frame, text="Test SSH", command=self.test_ssh_connection).grid(row=0, column=6, padx=5)
-    tk.Button(self.button_frame, text="Exportar JSON", command=self.export_hosts_to_json).grid(row=1, column=0, padx=5, pady=(5, 0))
-    tk.Button(self.button_frame, text="Importar JSON", command=self.import_hosts_from_json).grid(row=1, column=1, padx=5, pady=(5, 0))
+    tk.Button(self.button_frame, text=t("nuevo"), command=self.new_host).grid(row=0, column=0, padx=5)
+    tk.Button(self.button_frame, text=t("guardar"), command=self.save_host).grid(row=0, column=1, padx=5)
+    tk.Button(self.button_frame, text=t("eliminar"), command=self.delete_host).grid(row=0, column=2, padx=5)
+    tk.Button(self.button_frame, text=t("restaurar_backup"), command=self.restore_backup).grid(row=0, column=3, padx=5)
+    tk.Button(self.button_frame, text=t("copiar_ssh"), command=self.copy_ssh_command).grid(row=0, column=4, padx=5)
+    tk.Button(self.button_frame, text=t("test_ssh"), command=self.test_ssh_connection).grid(row=0, column=6, padx=5)
+    tk.Button(self.button_frame, text=t("exportar_json"), command=self.export_hosts_to_json).grid(row=1, column=0, padx=5, pady=(5, 0))
+    tk.Button(self.button_frame, text=t("importar_json"), command=self.import_hosts_from_json).grid(row=1, column=1, padx=5, pady=(5, 0))
     self.status_label = tk.Label(self.right_frame, text="", fg="green")
     self.status_label.pack(pady=(5, 0))
 
@@ -97,8 +98,8 @@ def toggle_password(self):
     if self.password_shown:
         self.password_entry.config(show='*')
         self.password_shown = False
-        self.show_password_button.config(text="Mostrar")
+        self.show_password_button.config(text=t("mostrar_contrasena"))
     else:
         self.password_entry.config(show='')
         self.password_shown = True
-        self.show_password_button.config(text="Ocultar")
+        self.show_password_button.config(text=t("ocultar_contrasena"))

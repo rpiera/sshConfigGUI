@@ -4,6 +4,7 @@ import subprocess
 import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
 import shutil
+import sys
 import json
 from datetime import datetime
 
@@ -13,6 +14,10 @@ from config_manager import (
     restore_backup,
     is_valid_hostname_or_ip
 )
+
+from i18n import load_language, t
+load_language("es")
+
 from auth import (
     ensure_pass_ready,
     get_password_from_pass,
@@ -57,19 +62,19 @@ class SSHConfigManager:
     def authenticate(self):
         pw_actual = get_password_from_pass()
         if pw_actual is None:
-            nueva = simpledialog.askstring("Crear contraseña", "Establece una contraseña para la aplicación:", show='*')
+            nueva = simpledialog.askstring(t("crear_contrasena"), t("establece_contrasena"), show='*')
             if nueva:
                 store_password_in_pass(PASS_ENTRY, nueva)
-                self.status_label = tk.Label(self.root, text="✅ Contraseña guardada en pass", fg="green")
+                self.status_label = tk.Label(self.root, text=t("contrasena_guardada"), fg="green")
                 self.status_label.pack()
             else:
-                messagebox.showerror("Cancelado", "No se ha establecido contraseña.")
+                messagebox.showerror(t("cancelado"), t("no_contrasena"))
                 self.root.destroy()
                 return
         else:
-            pw = simpledialog.askstring("Acceso protegido", "Introduce la contraseña:", show='*')
+            pw = simpledialog.askstring(t("acceso_protegido"), t("introduce_contrasena"), show='*')
             if pw != pw_actual:
-                messagebox.showerror("Acceso denegado", "Contraseña incorrecta.")
+                messagebox.showerror(t("acceso_denegado"), t("contrasena_incorrecta"))
                 self.root.destroy()
                 return
 
@@ -80,15 +85,15 @@ class SSHConfigManager:
     def restore_backup(self):
         if restore_backup():
             self.load_config()
-            messagebox.showinfo("Restaurado", "Backup restaurado correctamente.")
-            self.status_label.config(text="✅ Backup restaurado")
+            messagebox.showinfo(t("restaurado"), t("backup_restaurado"))
+            self.status_label.config(text=t("backup_restaurado_status"))
         else:
-            messagebox.showerror("Error", "No se encontró un archivo de backup para restaurar.")
+            messagebox.showerror(t("error"), t("no_backup"))
             self.status_label.config(text="")
 
     def save_host(self):
         if self.readonly:
-            messagebox.showinfo("Solo lectura", "La edición está deshabilitada en este modo.")
+            messagebox.showinfo(t("solo_lectura"), t("solo_lectura_msg"))
             return
 
         data = validar_host_campos(self.fields, self.identityfile_text)
@@ -98,13 +103,13 @@ class SSHConfigManager:
         if self.selected_index is not None:
             existing_hosts = [h.get("Host", "") for i, h in enumerate(self.hosts) if i != self.selected_index]
             if data["Host"] in existing_hosts:
-                messagebox.showwarning("Duplicado", f"Ya existe un host con el nombre '{data['Host']}'.")
+                messagebox.showwarning(t("duplicado"), t("host_duplicado") + f" '{data['Host']}'.")
                 return
             self.hosts[self.selected_index] = data
         else:
             existing_hosts = [h.get("Host", "") for h in self.hosts]
             if data["Host"] in existing_hosts:
-                messagebox.showwarning("Duplicado", f"Ya existe un host con el nombre '{data['Host']}'.")
+                messagebox.showwarning(t("duplicado"), t("host_duplicado") + f" '{data['Host']}'.")
                 return
             self.hosts.append(data)
 
@@ -113,14 +118,14 @@ class SSHConfigManager:
 
         write_config(self.hosts)
         self.refresh_list_with_search()
-        self.status_label.config(text="✅ Cambios guardados")
+        self.status_label.config(text=t("cambios_guardados"))
 
     def delete_host(self):
         if self.readonly:
-            messagebox.showinfo("Solo lectura", "No puedes eliminar en modo de solo lectura.")
+            messagebox.showinfo(t("solo_lectura"), "No puedes eliminar en modo de solo lectura.")
             return
         if self.selected_index is not None:
-            confirm = messagebox.askyesno("Confirmar eliminación", "¿Estás seguro de que quieres eliminar este host?")
+            confirm = messagebox.askyesno(t("confirmar_eliminacion"), t("confirmar_eliminacion_msg"))
             if confirm:
                 host_alias = self.hosts[self.selected_index].get("Host")
                 del self.hosts[self.selected_index]
@@ -130,23 +135,37 @@ class SSHConfigManager:
                 limpiar_campos_host(self)
                 if host_alias:
                     eliminar_password_por_host(host_alias)
-                self.status_label.config(text="✅ Host eliminado")
+                self.status_label.config(text=t("host_eliminado"))
 
     def new_host(self):
         if self.readonly:
-            messagebox.showinfo("Solo lectura", "No puedes crear un host nuevo en modo de solo lectura.")
+            messagebox.showinfo(t("solo_lectura"), "No puedes crear un host nuevo en modo de solo lectura.")
             return
         limpiar_campos_host(self)
         self.selected_index = None
         self.status_label.config(text="")
 
     def _add_readonly_toggle(self):
+        # Selector de idioma
+        lang_frame = tk.Frame(self.root)
+        lang_frame.pack(fill=tk.X, pady=(2, 0))
+        tk.Label(lang_frame, text=t("idioma")).pack(side=tk.LEFT, padx=(10, 4))
+        self.lang_var = tk.StringVar(value=self.app_settings.get("lang", "en"))
+        lang_select = tk.OptionMenu(lang_frame, self.lang_var, "es", "en", command=self._change_language)
+        lang_select.pack(side=tk.LEFT)
         toggle_frame = tk.Frame(self.root)
         toggle_frame.pack(fill=tk.X, pady=(2, 0))
         self.readonly_var = tk.BooleanVar(value=self.readonly)
-        readonly_btn = tk.Checkbutton(toggle_frame, text="Modo solo lectura", variable=self.readonly_var,
+        readonly_btn = tk.Checkbutton(toggle_frame, text=t("modo_solo_lectura"), variable=self.readonly_var,
                                       command=self._toggle_readonly)
         readonly_btn.pack(anchor="w", padx=10)
+
+    def _change_language(self, selected):
+        self.app_settings["lang"] = selected
+        load_language(selected)
+        self._save_app_settings()
+        self.root.destroy()
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
     def _toggle_readonly(self):
         self.readonly = self.readonly_var.get()
@@ -167,6 +186,8 @@ class SSHConfigManager:
             with open(APP_CONFIG_PATH, "r", encoding="utf-8") as f:
                 self.app_settings = json.load(f)
                 self.readonly = self.app_settings.get("readonly", False)
+                lang = self.app_settings.get("lang", "en")
+                load_language(lang)
         except Exception:
             self.app_settings = {}
 
@@ -176,6 +197,7 @@ class SSHConfigManager:
             self.app_settings["last_host"] = self.filtered_hosts[self.selected_index].get("Host")
         self.app_settings["password_shown"] = self.password_shown
         self.app_settings["readonly"] = self.readonly
+        self.app_settings["lang"] = self.app_settings.get("lang", "en")
         os.makedirs(os.path.dirname(APP_CONFIG_PATH), exist_ok=True)
         with open(APP_CONFIG_PATH, "w", encoding="utf-8") as f:
             json.dump(self.app_settings, f, indent=2)
@@ -225,11 +247,11 @@ class SSHConfigManager:
                     self.root.update()
                     self.status_label.config(text="✅ Copiado al portapapeles")
                 except Exception as e:
-                    messagebox.showerror("Error", f"No se pudo copiar al portapapeles: {e}")
+                    messagebox.showerror(t("error"), f"No se pudo copiar al portapapeles: {e}")
             else:
-                messagebox.showwarning("Campo incompleto", "Este host no tiene 'HostName'.")
+                messagebox.showwarning(t("campo_incompleto"), t("no_hostname"))
         else:
-            messagebox.showwarning("Sin selección", "Selecciona un host para copiar su comando SSH.")
+            messagebox.showwarning(t("sin_seleccion"), t("selecciona_para_copiar"))
 
     def select_identity_file(self):
         path = filedialog.askopenfilename(
@@ -249,7 +271,7 @@ class SSHConfigManager:
 
     def test_ssh_connection(self):
         if self.selected_index is None or self.selected_index >= len(self.filtered_hosts):
-            messagebox.showwarning("Sin selección", "Selecciona un host para probar la conexión.")
+            messagebox.showwarning(t("sin_seleccion"), t("selecciona_para_probar"))
             return
 
         host = self.filtered_hosts[self.selected_index]
@@ -257,7 +279,7 @@ class SSHConfigManager:
         hostname = host.get("HostName", "")
         port = host.get("Port", "")
         if not hostname:
-            messagebox.showerror("Datos incompletos", "Este host no tiene 'HostName'.")
+            messagebox.showerror(t("datos_incompletos"), t("no_hostname"))
             return
 
         cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5"]
@@ -275,7 +297,7 @@ class SSHConfigManager:
                 messagebox.showerror("Fallo en conexión",
                                      f"No se pudo conectar a {target}:{result.stderr.decode().strip()}")
         except Exception as e:
-            messagebox.showerror("Error", f"Error al ejecutar SSH:{str(e)}")
+            messagebox.showerror(t("error"), f"Error al ejecutar SSH:{str(e)}")
 
     def export_hosts_to_json(self):
         path = filedialog.asksaveasfilename(

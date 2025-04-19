@@ -6,28 +6,29 @@ from auth import (
     delete_password_from_pass,
     get_password_from_pass
 )
+from i18n import t
 from config_manager import is_valid_hostname_or_ip
 from gui import toggle_password
 
 def validar_host_campos(fields, identity_text):
-    host_name = fields["HostName"].get().strip()
+    host_name = fields[t("hostname")].get().strip()
     port = fields["Port"].get().strip()
 
     if host_name and not is_valid_hostname_or_ip(host_name):
-        messagebox.showerror("Error", f"HostName no válido: {host_name}")
+        messagebox.showerror(t("error"), t("hostname_invalido").format(host_name=host_name))
         return None
 
     if port and not port.isdigit():
-        messagebox.showerror("Error", f"El puerto debe ser un número entero: {port}")
+        messagebox.showerror(t("error"), t("puerto_entero").format(port=port))
         return None
 
     data = {key: entry.get().strip() for key, entry in fields.items() if entry.get().strip()}
     identity_files = identity_text.get("1.0", tk.END).strip().splitlines()
     if identity_files:
-        data["IdentityFile"] = identity_files
+        data[t("identityfile")] = identity_files
 
     if not data.get("Host"):
-        messagebox.showerror("Error", "El campo 'Host' es obligatorio.")
+        messagebox.showerror(t("error"), t("campo_host_obligatorio"))
         return None
 
     return data
@@ -57,7 +58,7 @@ def cargar_datos_host(app):
         entry.delete(0, tk.END)
         entry.insert(0, host.get(key, ""))
     app.identityfile_text.delete("1.0", tk.END)
-    identity_files = host.get("IdentityFile", [])
+    identity_files = host.get(t("identityfile"), [])
     if isinstance(identity_files, str):
         identity_files = [identity_files]
     app.identityfile_text.insert(tk.END, "\n".join(identity_files))

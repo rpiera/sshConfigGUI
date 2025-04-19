@@ -1,4 +1,5 @@
 import subprocess
+from i18n import t
 
 PASS_ENTRY = "sshConfigGUI/master-password"
 
@@ -43,10 +44,10 @@ def store_password_in_pass(entry, password):
     try:
         subprocess.run(["pass", "insert", "-m", "--force", entry], input=password.encode(), check=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error guardando la contraseña en pass: {e}")
+        print(t("error_guardando_pass").format(e=e))
 
 def delete_password_from_pass(entry):
     try:
         subprocess.run(["pass", "rm", "-f", entry], check=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error eliminando la contraseña en pass: {e}")
+        print(t("error_eliminando_pass").format(e=e))
