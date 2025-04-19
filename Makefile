@@ -87,7 +87,7 @@ build-appimage: build-bin
 	echo 'exec $(APP_NAME) \"$$@\"'                       >> $(APPIMAGE_DIR)/AppRun
 	chmod +x $(APPIMAGE_DIR)/AppRun
 
-	appimagetool $(APPIMAGE_DIR)
+	./appimagetool $(APPIMAGE_DIR)
 	@echo "AppImage generado."
 
 # 4. Crear Snap
