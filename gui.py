@@ -62,7 +62,9 @@ def build_gui(self, extra_fields):
     tk.Button(self.button_frame, text="Eliminar", command=self.delete_host).grid(row=0, column=2, padx=5)
     tk.Button(self.button_frame, text="Restaurar backup", command=self.restore_backup).grid(row=0, column=3, padx=5)
     tk.Button(self.button_frame, text="Copiar SSH", command=self.copy_ssh_command).grid(row=0, column=4, padx=5)
-
+    tk.Button(self.button_frame, text="Test SSH", command=self.test_ssh_connection).grid(row=0, column=6, padx=5)
+    tk.Button(self.button_frame, text="Exportar JSON", command=self.export_hosts_to_json).grid(row=1, column=0, padx=5, pady=(5, 0))
+    tk.Button(self.button_frame, text="Importar JSON", command=self.import_hosts_from_json).grid(row=1, column=1, padx=5, pady=(5, 0))
     self.status_label = tk.Label(self.right_frame, text="", fg="green")
     self.status_label.pack(pady=(5, 0))
 

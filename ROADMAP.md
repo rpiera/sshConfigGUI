@@ -27,16 +27,16 @@
 - [x] Integración total con `pass` para campos como `Password`
 
 ## 🧪 Fase 5 – Utilidades extra
-- [ ] Búsqueda de hosts por nombre
-- [ ] Copiar entrada SSH al portapapeles
-- [ ] Selector de archivo para IdentityFile
-- [ ] Recordar tamaño de ventana, último host seleccionado, visibilidad de contraseña
-- [ ] Modo solo lectura para evitar ediciones accidentales
-- [ ] Detección de duplicados al guardar
+- [x] Búsqueda de hosts por nombre
+- [x] Copiar entrada SSH al portapapeles
+- [x] Selector de archivo para IdentityFile
+- [x] Recordar tamaño de ventana, último host seleccionado, visibilidad de contraseña
+- [x] Modo solo lectura para evitar ediciones accidentales
+- [x] Detección de duplicados al guardar
 - [ ] Recarga automática si se modifica ~/.ssh/config externamente
-- [ ] Test de conexión SSH
-- [ ] Exportar/importar JSON/YAML
-- [ ] Backups con timestamp
+- [x] Test de conexión SSH
+- [x] Exportar/importar JSON (descartado YAML)
+- [x] Backups con timestamp en carpeta separada
 
 ## 📦 Fase 6 – Empaquetado
 - [ ] `.deb` instalable

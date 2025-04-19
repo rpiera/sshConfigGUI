@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
 import shutil
 import json
+from datetime import datetime
 
 from config_manager import (
     load_config,
@@ -36,6 +37,7 @@ class SSHConfigManager:
     readonly = False
 
     def __init__(self, root):
+        self._last_config_mtime = 0
         self._load_app_settings()
         self.search_var = tk.StringVar()
         self.search_var.trace("w", lambda *args: self.refresh_list_with_search())
@@ -77,11 +79,9 @@ class SSHConfigManager:
 
     def restore_backup(self):
         if restore_backup():
-            confirm = messagebox.askyesno("Restaurar backup", "¿Deseas restaurar la última copia de seguridad?")
-            if confirm:
-                self.load_config()
-                messagebox.showinfo("Restaurado", "Backup restaurado correctamente.")
-                self.status_label.config(text="✅ Backup restaurado")
+            self.load_config()
+            messagebox.showinfo("Restaurado", "Backup restaurado correctamente.")
+            self.status_label.config(text="✅ Backup restaurado")
         else:
             messagebox.showerror("Error", "No se encontró un archivo de backup para restaurar.")
             self.status_label.config(text="")
@@ -144,7 +144,8 @@ class SSHConfigManager:
         toggle_frame = tk.Frame(self.root)
         toggle_frame.pack(fill=tk.X, pady=(2, 0))
         self.readonly_var = tk.BooleanVar(value=self.readonly)
-        readonly_btn = tk.Checkbutton(toggle_frame, text="Modo solo lectura", variable=self.readonly_var, command=self._toggle_readonly)
+        readonly_btn = tk.Checkbutton(toggle_frame, text="Modo solo lectura", variable=self.readonly_var,
+                                      command=self._toggle_readonly)
         readonly_btn.pack(anchor="w", padx=10)
 
     def _toggle_readonly(self):
@@ -244,7 +245,72 @@ class SSHConfigManager:
             if path not in lines:
                 lines.append(path)
             self.identityfile_text.delete("1.0", tk.END)
-            self.identityfile_text.insert(tk.END, "\n".join(lines))
+            self.identityfile_text.insert(tk.END, "".join(lines))  # revisar cada 3s
+
+    def test_ssh_connection(self):
+        if self.selected_index is None or self.selected_index >= len(self.filtered_hosts):
+            messagebox.showwarning("Sin selección", "Selecciona un host para probar la conexión.")
+            return
+
+        host = self.filtered_hosts[self.selected_index]
+        user = host.get("User", "")
+        hostname = host.get("HostName", "")
+        port = host.get("Port", "")
+        if not hostname:
+            messagebox.showerror("Datos incompletos", "Este host no tiene 'HostName'.")
+            return
+
+        cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5"]
+        if port:
+            cmd.extend(["-p", port])
+        target = f"{user}@{hostname}" if user else hostname
+        cmd.append(target)
+        cmd.append("exit")
+
+        try:
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=7)
+            if result.returncode == 0:
+                messagebox.showinfo("Conexión exitosa", f"✅ Conexión SSH a {target} verificada.")
+            else:
+                messagebox.showerror("Fallo en conexión",
+                                     f"No se pudo conectar a {target}:{result.stderr.decode().strip()}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al ejecutar SSH:{str(e)}")
+
+    def export_hosts_to_json(self):
+        path = filedialog.asksaveasfilename(
+            title="Exportar hosts como JSON",
+            defaultextension=".json",
+            filetypes=[("Archivos JSON", "*.json")]
+        )
+        if path:
+            try:
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(self.hosts, f, indent=2)
+                messagebox.showinfo("Exportación completa", f"Se exportaron los hosts a {path}.")
+            except Exception as e:
+                messagebox.showerror("Error al exportar", str(e))
+
+    def import_hosts_from_json(self):
+        path = filedialog.askopenfilename(
+            title="Importar hosts desde JSON",
+            filetypes=[("Archivos JSON", "*.json")]
+        )
+        if path:
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if not isinstance(data, list):
+                        raise ValueError("El archivo JSON debe contener una lista de hosts.")
+                    confirm = messagebox.askyesno("Confirmar importación",
+                                                  "¿Deseas reemplazar todos los hosts actuales?")
+                    if confirm:
+                        self.hosts = data
+                        write_config(self.hosts)
+                        self.refresh_list_with_search()
+                        messagebox.showinfo("Importación completada", f"Se importaron {len(data)} hosts desde {path}.")
+            except Exception as e:
+                messagebox.showerror("Error al importar", str(e))
 
     def write_config(self):
         write_config(self.hosts)
@@ -253,5 +319,8 @@ class SSHConfigManager:
 if __name__ == "__main__":
     root = tk.Tk()
     app = SSHConfigManager(root)
-    root.protocol("WM_DELETE_WINDOW", lambda: (app._save_app_settings(), root.destroy()))
+    root.protocol("WM_DELETE_WINDOW", lambda: (
+        app._save_app_settings(),
+        root.destroy()
+    ))
     root.mainloop()
