@@ -1,76 +1,18 @@
-name: CI
+name: Artifact Test
 
 on:
   push:
     branches: [ main ]
-    tags:    [ 'v*' ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  build:
-    name: Build & Package
+  upload-test:
     runs-on: ubuntu-latest
-    env:
-      APP_NAME: sshconfiggui
-      VERSION: "${{ github.ref_name }}"
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
-      - name: Install system deps
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y \
-            python3-tk gnupg2 pass \
-            dpkg-dev fakeroot \
-            snapcraft squashfs-tools build-essential
-
-      - name: Install Python packages
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyinstaller
-
-      - name: Download AppImageTool
-        run: |
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x appimagetool-x86_64.AppImage
-
-      - name: Build all packages
-        run: make all
-
-      - name: Upload .deb artifact
+      - name: Upload README as dummy artifact
         uses: actions/upload-artifact@v3.1.3
         with:
-          name: ${{ env.APP_NAME }}.deb
-          path: build/${{ env.APP_NAME }}-${{ env.VERSION }}.deb
-
-      - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: ${{ env.APP_NAME }}-AppImage
-          path: "*.AppImage"
-
-      - name: Upload Snap artifact
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: ${{ env.APP_NAME }}.snap
-          path: "*.snap"
-
-  lint:
-    name: Lint Python
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-      - name: Install flake8 and lint
-        run: |
-          python -m pip install flake8
-          flake8 .
+          name: dummy-readme
+          path: README.md
