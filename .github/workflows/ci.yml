@@ -1,18 +1,20 @@
-name: Artifact Test
+name: Artifact Fallback
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  upload-test:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Upload README as dummy artifact
-        uses: actions/upload-artifact@v3
+      - name: Create dummy file
+        run: echo "ok" > dummy.txt
+
+      - name: Upload dummy artifact
+        uses: actions/upload-artifact@master
         with:
-          name: dummy-readme
-          path: README.md
+          name: dummy
+          path: dummy.txt
