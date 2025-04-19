@@ -7,9 +7,9 @@ DEB_DIR       := build/$(APP_NAME)-$(VERSION)
 APPIMAGE_DIR  := build/$(APP_NAME).AppDir
 SNAP_NAME     := $(APP_NAME)_$(VERSION)_amd64
 
-.PHONY: all clean build-bin build-deb build-appimage build-snap
+.PHONY: all clean build-bin build-deb build-snap
 
-all: build-bin build-deb build-appimage build-snap
+all: build-bin build-deb build-snap  # AppImage omitido en CI (requiere FUSE)
 
 # 1. Generar binario con PyInstaller
 build-bin:
@@ -56,39 +56,6 @@ build-deb: build-bin
 
 	dpkg-deb --build $(DEB_DIR)
 	@echo ".deb creado: $(DEB_DIR).deb"
-
-# 3. Crear AppImage
-build-appimage: build-bin
-	@echo "[3/4] Construyendo AppImage..."
-	rm -rf $(APPIMAGE_DIR)
-	mkdir -p $(APPIMAGE_DIR)/usr/bin
-	mkdir -p $(APPIMAGE_DIR)/usr/lib/$(APP_NAME)
-	mkdir -p $(APPIMAGE_DIR)/usr/share/applications
-	mkdir -p $(APPIMAGE_DIR)/usr/share/icons/hicolor/128x128/apps
-
-	# Copiar binario y recursos
-	cp $(BIN_DIST) $(APPIMAGE_DIR)/usr/bin/$(APP_NAME)
-	cp -r locales $(APPIMAGE_DIR)/usr/lib/$(APP_NAME)/
-	cp resources/sshconfiggui.png $(APPIMAGE_DIR)/usr/share/icons/hicolor/128x128/apps/$(APP_NAME).png
-
-	# Desktop entry
-	echo "[Desktop Entry]"                                                 >  $(APPIMAGE_DIR)/usr/share/applications/$(APP_NAME).desktop
-	echo "Type=Application"                                               >> $(APPIMAGE_DIR)/usr/share/applications/$(APP_NAME).desktop
-	echo "Name=SSH Config GUI"                                            >> $(APPIMAGE_DIR)/usr/share/applications/$(APP_NAME).desktop
-	echo "Exec=$(APP_NAME)"                                               >> $(APPIMAGE_DIR)/usr/share/applications/$(APP_NAME).desktop
-	echo "Icon=$(APP_NAME)"                                               >> $(APPIMAGE_DIR)/usr/share/applications/$(APP_NAME).desktop
-	echo "Categories=Utility;Network;"                                    >> $(APPIMAGE_DIR)/usr/share/applications/$(APP_NAME).desktop
-	echo "Terminal=false"                                                 >> $(APPIMAGE_DIR)/usr/share/applications/$(APP_NAME).desktop
-
-	# AppRun
-	echo '#!/bin/bash'                                    >  $(APPIMAGE_DIR)/AppRun
-	echo 'HERE=\"$$(dirname \"$$(readlink -f \"$$0\")\")\"' >> $(APPIMAGE_DIR)/AppRun
-	echo 'export PATH=\"$$HERE/usr/bin:$$PATH\"'          >> $(APPIMAGE_DIR)/AppRun
-	echo 'exec $(APP_NAME) \"$$@\"'                       >> $(APPIMAGE_DIR)/AppRun
-	chmod +x $(APPIMAGE_DIR)/AppRun
-
-	./appimagetool $(APPIMAGE_DIR)
-	@echo "AppImage generado."
 
 # 4. Crear Snap
 build-snap:
